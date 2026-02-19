@@ -1,0 +1,15 @@
+Commands:
+  elo:
+    Description: "Muestra tus estadísticas o las de otro jugador."
+    Permission: "royaleelo.command.elo"
+    Usage: "/elo [jugador]"
+
+  elotop:
+    Description: "Muestra el Top 10 global de Elo."
+    Permission: "royaleelo.command.elotop"
+    Usage: "/elotop"
+
+  royaleelo:
+    Description: "Comando administrativo del plugin."
+    Permission: "royaleelo.command.admin"
+    Usage: "/royaleelo reload"

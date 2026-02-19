@@ -1,0 +1,16 @@
+# ============================================
+#        RoyaleElo Configuration File
+# ============================================
+
+messages:
+  prefix: "&8[&6RoyaleElo&8] "
+  reload: "&aConfiguración recargada correctamente."
+
+  player-kill:
+    killer-message: "&aHas eliminado a &e%victim%&a."
+    killer-elo: "&7Ganaste &a+%elo_change% &7de Elo. &8(&e%elo%&8)"
+
+    victim-message: "&cHas sido eliminado por &e%killer%&c."
+    victim-elo: "&7Perdiste &c-%elo_change% &7de Elo. &8(&e%elo%&8)"
+
+  no-permission: "&cNo tienes permiso para hacer esto."

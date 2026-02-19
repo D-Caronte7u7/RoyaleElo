@@ -1,0 +1,14 @@
+name: RoyaleElo
+version: 1.0
+main: org.caronte.Main
+api-version: 1.20
+
+softdepend: [PlaceholderAPI]
+
+commands:
+  elo:
+    description: Elo principal
+  elotop:
+    description: Top Elo
+  royaleelo:
+    description: Admin RoyaleElo
