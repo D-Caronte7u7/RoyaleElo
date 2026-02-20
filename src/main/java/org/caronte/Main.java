@@ -54,9 +54,15 @@ public class Main extends JavaPlugin {
         // Commands
         // =========================
         EloCommand eloCommand = new EloCommand(this);
+
         getCommand("elo").setExecutor(eloCommand);
+        getCommand("elo").setTabCompleter(eloCommand);
+
         getCommand("elotop").setExecutor(eloCommand);
+        getCommand("elotop").setTabCompleter(eloCommand);
+
         getCommand("royaleelo").setExecutor(eloCommand);
+        getCommand("royaleelo").setTabCompleter(eloCommand);
 
         // =========================
         // PlaceholderAPI

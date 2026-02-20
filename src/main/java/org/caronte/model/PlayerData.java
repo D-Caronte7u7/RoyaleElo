@@ -22,8 +22,8 @@ public class PlayerData {
     public int getDeaths() { return deaths; }
 
     public void setElo(int elo) { this.elo = elo; }
-    public void addKill() { this.kills++; }
-    public void addDeath() { this.deaths++; }
+    public void addKill() { kills++; }
+    public void addDeath() { deaths++; }
 
     public double getKDR() {
         return deaths == 0 ? kills : (double) kills / deaths;

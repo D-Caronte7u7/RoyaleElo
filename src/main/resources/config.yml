@@ -1,16 +1,87 @@
-# ============================================
-#        RoyaleElo Configuration File
-# ============================================
+#_____                   _        ______ _      ____
+#|  __ \                 | |      |  ____| |    / __ \
+#| |__) |___  _   _  __ _| | ___  | |__  | |   | |  | |
+#|  _  // _ \| | | |/ _` | |/ _ \ |  __| | |   | |  | |
+#| | \ \ (_) | |_| | (_| | |  __/ | |____| |___| |__| |
+#|_|  \_\___/ \__, |\__,_|_|\___| |______|______\____/
+#              __/ |
+#             |___/
+#
 
-messages:
+Settings:
+  Elo:
+    Default: 1000
+    Player-Win: 10
+    Player-Lose: 10
+    Cooldown: 60s
+
+Abuse:
+  Diff-Multiplier:
+    100: 1.0
+    300: 0.5
+    500: 0.2
+    default: 0.0
+
+  Penalty-Multiplier:
+    300: 1.5
+    150: 1.2
+    default: 1.0
+
+
+
+Messages:
   prefix: "&8[&6RoyaleElo&8] "
   reload: "&aConfiguración recargada correctamente."
+  no-permission: "&cNo tienes permiso para hacer esto."
 
   player-kill:
     killer-message: "&aHas eliminado a &e%victim%&a."
     killer-elo: "&7Ganaste &a+%elo_change% &7de Elo. &8(&e%elo%&8)"
-
     victim-message: "&cHas sido eliminado por &e%killer%&c."
     victim-elo: "&7Perdiste &c-%elo_change% &7de Elo. &8(&e%elo%&8)"
 
-  no-permission: "&cNo tienes permiso para hacer esto."
+  no-elo-cooldown: "&cEsta kill no dio Elo (cooldown activo)."
+  no-elo-repeat: "&cEsta kill no dio Elo (farm detectado)."
+  no-elo-diff: "&cElo cancelado por gran diferencia de nivel."
+  elo-gain: "&a+%elo_change% &7Elo &8(&e%elo%&8)"
+  elo-loss: "&c-%elo_change% &7Elo &8(&e%elo%&8)"
+
+  restart-request: "&e⚠ &6Confirmación requerida:&7 usa &e/royaleelo restart confirm &7para reiniciar la temporada."
+  restart-timeout: "&cLa confirmación del reinicio ha expirado."
+  restart-success: "&a✔ Temporada reiniciada correctamente."
+  restart-cancelled: "&c✖ Reinicio cancelado."
+
+  help:
+    header: "&6&lRoyaleElo &7- Ayuda"
+    footer: "&8------------------------"
+    commands:
+      - "&e/elo &7- Ver tus estadísticas"
+      - "&e/elo <jugador> &7- Ver estadísticas de otro jugador"
+      - "&e/elotop &7- Ver el top global"
+      - "&e/royaleelo reload &7- Recargar configuración"
+      - "&e/royaleelo debug &7- Información del sistema"
+      - "&e/royaleelo set <jugador|all> <elo> &7- Establecer Elo"
+      - "&e/royaleelo restart all &7- Reiniciar temporada"
+
+  only-players: "&cEste comando solo puede usarlo un jugador."
+  player-not-found: "&cJugador no encontrado."
+  invalid-number: "&cEl valor debe ser un número."
+  wrong-usage: "&cUso incorrecto. Usa &e/royaleelo help"
+
+  stats:
+    header: "&6&lEstadísticas de %player%"
+    elo: "&7Elo: &e%elo%"
+    kills: "&7Kills: &a%kills%"
+    deaths: "&7Deaths: &c%deaths%"
+    kdr: "&7KDR: &b%kdr%"
+
+  top:
+    header: "&6&lTop 10 Elo Global"
+    empty: "&7No hay datos todavía."
+    line: "&e#%pos% &7%player% &8- &e%elo%"
+
+  restart:
+    request: "&e⚠ &6Confirmación requerida:&7 usa &e/royaleelo restart confirm"
+    success: "&a✔ Temporada reiniciada correctamente."
+    cancelled: "&c✖ Reinicio cancelado."
+    timeout: "&c⏰ La confirmación ha expirado."

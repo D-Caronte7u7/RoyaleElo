@@ -6,6 +6,7 @@ import org.caronte.model.PlayerData;
 
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,9 +25,7 @@ public class SQLiteStorage {
             if (!folder.exists()) folder.mkdirs();
 
             File file = new File(folder, "database.db");
-
             connection = DriverManager.getConnection("jdbc:sqlite:" + file);
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -44,9 +43,9 @@ public class SQLiteStorage {
         try (PreparedStatement ps = connection.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS player_stats (" +
                         "uuid TEXT PRIMARY KEY," +
-                        "elo INTEGER DEFAULT 1000," +
-                        "kills INTEGER DEFAULT 0," +
-                        "deaths INTEGER DEFAULT 0)"
+                        "elo INTEGER," +
+                        "kills INTEGER," +
+                        "deaths INTEGER)"
         )) {
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -75,14 +74,16 @@ public class SQLiteStorage {
         }
 
         createPlayer(uuid);
-        return new PlayerData(uuid, 1000, 0, 0);
+        int defaultElo = plugin.getConfig().getInt("Settings.Elo.Default");
+        return new PlayerData(uuid, defaultElo, 0, 0);
     }
 
     private void createPlayer(UUID uuid) {
         try (PreparedStatement ps = connection.prepareStatement(
-                "INSERT INTO player_stats(uuid) VALUES(?)"
+                "INSERT INTO player_stats(uuid, elo, kills, deaths) VALUES(?, ?, 0, 0)"
         )) {
             ps.setString(1, uuid.toString());
+            ps.setInt(2, plugin.getConfig().getInt("Settings.Elo.Default"));
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -103,29 +104,45 @@ public class SQLiteStorage {
         }
     }
 
-    public List<String> getTop10() {
+    public void setAllElo(int elo) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE player_stats SET elo=?"
+        )) {
+            ps.setInt(1, elo);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-        List<String> list = new java.util.ArrayList<>();
+    public void resetAll(int defaultElo) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE player_stats SET elo=?, kills=0, deaths=0"
+        )) {
+            ps.setInt(1, defaultElo);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<String> getTop10() {
+        List<String> list = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(
                 "SELECT uuid, elo FROM player_stats ORDER BY elo DESC LIMIT 10"
         )) {
-
             ResultSet rs = ps.executeQuery();
-
             while (rs.next()) {
                 String uuid = rs.getString("uuid");
                 int elo = rs.getInt("elo");
-
-                String name = Bukkit.getOfflinePlayer(java.util.UUID.fromString(uuid)).getName();
-
+                String name = Bukkit.getOfflinePlayer(UUID.fromString(uuid)).getName();
+                if (name == null) name = uuid.substring(0, 8);
                 list.add(name + " §8- §e" + elo);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return list;
     }
 }

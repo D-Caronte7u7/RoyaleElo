@@ -12,4 +12,4 @@ Commands:
   royaleelo:
     Description: "Comando administrativo del plugin."
     Permission: "royaleelo.command.admin"
-    Usage: "/royaleelo reload"
+    Usage: "/royaleelo <reload|debug|set|restart>"

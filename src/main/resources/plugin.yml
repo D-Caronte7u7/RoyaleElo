@@ -7,8 +7,13 @@ softdepend: [PlaceholderAPI]
 
 commands:
   elo:
-    description: Elo principal
+    description: Ver estadísticas de Elo
   elotop:
-    description: Top Elo
+    description: Ver top Elo
   royaleelo:
-    description: Admin RoyaleElo
+    description: Comandos administrativos de RoyaleElo
+
+permissions:
+  royaleelo.admin:
+    description: Acceso administrativo a RoyaleElo
+    default: op

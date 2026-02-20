@@ -7,124 +7,204 @@ import org.caronte.Main;
 import org.caronte.model.PlayerData;
 import org.caronte.storage.SQLiteStorage;
 
-import java.util.List;
+import java.util.*;
 
-public class EloCommand implements CommandExecutor {
+public class EloCommand implements CommandExecutor, TabCompleter {
 
     private final Main plugin;
     private final SQLiteStorage storage;
+    private final Map<UUID, Long> restartConfirmations = new HashMap<>();
 
     public EloCommand(Main plugin) {
         this.plugin = plugin;
         this.storage = plugin.getStorage();
     }
 
+    // =================================================
+    // COMMANDS
+    // =================================================
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-        String commandName = cmd.getName().toLowerCase();
-        String prefix = plugin.color(plugin.getConfig().getString("messages.prefix"));
+        String name = cmd.getName().toLowerCase();
 
-        String permission = getPermission(commandName);
-
-        if (permission != null && !permission.isEmpty()) {
-            if (!sender.hasPermission(permission)) {
-                sender.sendMessage(prefix + "§cNo tienes permiso.");
-                return true;
-            }
-        }
-
-        // =====================
+        // =========================
         // /elo
-        // =====================
-        if (commandName.equals("elo")) {
+        // =========================
+        if (name.equals("elo")) {
 
             if (args.length == 0) {
-
                 if (!(sender instanceof Player player)) {
-                    sender.sendMessage("Solo jugadores.");
+                    send(sender, "Messages.only-players");
                     return true;
                 }
-
-                PlayerData data = storage.getPlayerData(player.getUniqueId());
-                sendStats(sender, player.getName(), data);
+                sendStats(sender, player.getName(),
+                        storage.getPlayerData(player.getUniqueId()));
                 return true;
             }
 
             Player target = Bukkit.getPlayer(args[0]);
-
             if (target == null) {
-                sender.sendMessage(prefix + "§cJugador no encontrado.");
+                send(sender, "Messages.player-not-found");
                 return true;
             }
 
-            PlayerData data = storage.getPlayerData(target.getUniqueId());
-            sendStats(sender, target.getName(), data);
+            sendStats(sender, target.getName(),
+                    storage.getPlayerData(target.getUniqueId()));
             return true;
         }
 
-        // =====================
+        // =========================
         // /elotop
-        // =====================
-        if (commandName.equals("elotop")) {
+        // =========================
+        if (name.equals("elotop")) {
 
             List<String> top = storage.getTop10();
 
-            sender.sendMessage(" ");
-            sender.sendMessage("§6§lTop 10 Elo Global");
-            sender.sendMessage(" ");
+            send(sender, "Messages.top.header");
 
-            int pos = 1;
-            for (String line : top) {
-                sender.sendMessage("§e#" + pos + " §7" + line);
-                pos++;
+            if (top.isEmpty()) {
+                send(sender, "Messages.top.empty");
+            } else {
+                int pos = 1;
+                for (String line : top) {
+                    sender.sendMessage(plugin.color(
+                            plugin.getConfig().getString("Messages.top.line")
+                                    .replace("%pos%", String.valueOf(pos))
+                                    .replace("%player%", line.split(" §8- ")[0])
+                                    .replace("%elo%", line.split(" §8- ")[1].replace("§e", ""))
+                    ));
+                    pos++;
+                }
             }
-
-            sender.sendMessage(" ");
             return true;
         }
 
-        // =====================
-        // /royaleelo reload
-        // =====================
-        if (commandName.equals("royaleelo")) {
+        // =========================
+        // /royaleelo (ADMIN)
+        // =========================
+        if (!name.equals("royaleelo")) return false;
 
-            if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+        if (!sender.hasPermission("royaleelo.admin")) {
+            send(sender, "messages.no-permission");
+            return true;
+        }
 
-                plugin.reloadConfig();
-                plugin.reloadCommandsConfig();
+        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+            sendHelp(sender);
+            return true;
+        }
 
-                sender.sendMessage(prefix + plugin.color(
-                        plugin.getConfig().getString("messages.reload")
-                ));
+        // reload
+        if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+            plugin.reloadConfig();
+            plugin.reloadCommandsConfig();
+            send(sender, "messages.reload");
+            return true;
+        }
+
+        // restart all
+        if (args.length == 2 &&
+                args[0].equalsIgnoreCase("restart") &&
+                args[1].equalsIgnoreCase("all")) {
+
+            long expire = System.currentTimeMillis() + parseTime(
+                    plugin.getConfig().getString("Settings.Season.Restart-Confirm-Time"));
+
+            UUID id = sender instanceof Player p ? p.getUniqueId() : UUID.randomUUID();
+            restartConfirmations.put(id, expire);
+
+            send(sender, "Messages.restart.request");
+            return true;
+        }
+
+        // restart confirm
+        if (args.length == 2 &&
+                args[0].equalsIgnoreCase("restart") &&
+                args[1].equalsIgnoreCase("confirm")) {
+
+            UUID id = sender instanceof Player p ? p.getUniqueId() : null;
+
+            if (id == null || !restartConfirmations.containsKey(id)) {
+                send(sender, "Messages.restart.cancelled");
                 return true;
             }
 
-            sender.sendMessage(prefix + "§cUso correcto: " + getUsage("royaleelo"));
+            if (System.currentTimeMillis() > restartConfirmations.get(id)) {
+                restartConfirmations.remove(id);
+                send(sender, "Messages.restart.timeout");
+                return true;
+            }
+
+            restartConfirmations.remove(id);
+            storage.resetAll(plugin.getConfig().getInt("Settings.Elo.Default"));
+
+            send(sender, "Messages.restart.success");
             return true;
         }
 
-        return false;
+        send(sender, "Messages.wrong-usage");
+        return true;
     }
 
-    private void sendStats(CommandSender sender, String name, PlayerData data) {
+    // =================================================
+    // TAB COMPLETER
+    // =================================================
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
 
-        sender.sendMessage(" ");
-        sender.sendMessage("§6§lEstadísticas de " + name);
-        sender.sendMessage("§7Elo: §e" + data.getElo());
-        sender.sendMessage("§7Kills: §a" + data.getKills());
-        sender.sendMessage("§7Deaths: §c" + data.getDeaths());
-        sender.sendMessage("§7KDR: §b" + String.format("%.2f", data.getKDR()));
-        sender.sendMessage(" ");
+        if (!cmd.getName().equalsIgnoreCase("royaleelo")) return Collections.emptyList();
+
+        if (args.length == 1)
+            return Arrays.asList("help", "reload", "set", "restart");
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("restart"))
+            return Arrays.asList("all", "confirm");
+
+        return Collections.emptyList();
     }
 
-    private String getPermission(String command) {
-        return plugin.getCommandsConfig()
-                .getString("Commands." + command + ".Permission");
+    // =================================================
+    // HELPERS
+    // =================================================
+    private void sendStats(CommandSender sender, String player, PlayerData data) {
+
+        sender.sendMessage(plugin.color(
+                plugin.getConfig().getString("Messages.stats.header")
+                        .replace("%player%", player)));
+
+        send(sender, "Messages.stats.elo", "%elo%", data.getElo());
+        send(sender, "Messages.stats.kills", "%kills%", data.getKills());
+        send(sender, "Messages.stats.deaths", "%deaths%", data.getDeaths());
+        send(sender, "Messages.stats.kdr",
+                "%kdr%", String.format("%.2f", data.getKDR()));
     }
 
-    private String getUsage(String command) {
-        return plugin.getCommandsConfig()
-                .getString("Commands." + command + ".Usage");
+    private void sendHelp(CommandSender sender) {
+
+        send(sender, "Messages.help.header");
+
+        for (String line : plugin.getConfig().getStringList("Messages.help.lines")) {
+            sender.sendMessage(plugin.color(line));
+        }
+
+        send(sender, "Messages.help.footer");
+    }
+
+    private void send(CommandSender sender, String path, Object... vars) {
+        String msg = plugin.getConfig().getString(path);
+        if (msg == null) return;
+
+        for (int i = 0; i < vars.length; i += 2) {
+            msg = msg.replace(vars[i].toString(), vars[i + 1].toString());
+        }
+        sender.sendMessage(plugin.color(msg));
+    }
+
+    private long parseTime(String s) {
+        s = s.toLowerCase();
+        if (s.endsWith("s")) return Long.parseLong(s.replace("s", "")) * 1000;
+        if (s.endsWith("m")) return Long.parseLong(s.replace("m", "")) * 60_000;
+        return Long.parseLong(s);
     }
 }
